@@ -7,6 +7,7 @@ const fs = require('fs')
 const FileSync = require('lowdb/adapters/FileSync')
 const {OAuth2Client} = require('google-auth-library');
 
+
 const app = express();
 app.use(session(
   {
@@ -20,9 +21,18 @@ app.use(session(
 app.use(express.urlencoded()); // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.json()); // Parse JSON bodies (as sent by API clients)
 
+var expressWs = require('express-ws')(app);
+var aWss = expressWs.getWss('/echo');
+
 const adapter = new FileSync('.data/db.json')
 const db = low(adapter);
 db.defaults({ messages: [], count: 0 }).write();
+
+function broadcastToAllWebsocketClients(message) {
+    aWss.clients.forEach(function (client) {
+      client.send(JSON.stringify(message));
+    });
+}
 
 function isAuthed(sess) {
   if(sess && sess.email) {
@@ -83,12 +93,6 @@ app.post("/login", (request, response) => {
 });
 
 // Log when Twilio calls us back after a call ends or other status change
-app.post("/twilioCallback", (request, response) => {
-  console.log("status callback for twilio: " + request.body);
-  response.json([]);
-});
-
-// Log when Twilio calls us back after a call ends or other status change
 app.post("/slackCallback", (request, response) => {
   console.log("status callback for slack: " + request.body);
   response.json([]);
@@ -111,7 +115,7 @@ app.post("/api/getStream", (request, response) => {
       .sortBy('dateTime')
       .value();
       
-    console.log(value);
+    // console.log(value);
     response.json(value);
     })
     .catch((error) => {
@@ -121,7 +125,7 @@ app.post("/api/getStream", (request, response) => {
 
 app.post("/api/postMessage", (request, response) => {
   const authToken = request.body.authToken;
-  console.log(authToken);
+  // console.log(authToken);
   const verify = isGoogleAuthed(authToken);
   verify(authToken)
     .then( (payload) => {
@@ -138,8 +142,9 @@ app.post("/api/postMessage", (request, response) => {
     .push(message)
     .write();
     
-    console.log("written");
-    response.json(["hello this is done."]);
+    // console.log("written");
+    response.json(["posted"]);
+    broadcastToAllWebsocketClients(message);
     
     })
     .catch((error) => {
@@ -175,4 +180,25 @@ app.post("/api/admin/:action", (request, response) => {
 // listen for requests :)
 const listener = app.listen(process.env.PORT, () => {
   console.log("Listening on port " + listener.address().port);
+});
+
+app.ws('/echo', function(ws, req) {
+  ws.on('message', function(msg) {
+    const verify = isGoogleAuthed(msg);
+    verify(msg)
+      .then( (payload) => {
+        if (payload['hd'] !== process.env.ALLOWED_DOMAIN) {
+          console.log("closing due to not allowed domain");
+          ws.close();
+          return;
+        }
+      console.log("websocket auth established");
+    })
+    .catch((error) => {
+      console.log(error);
+      // response.json(["not authed"]);
+      ws.close();
+    });  
+
+  });
 });

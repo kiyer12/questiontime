@@ -12,12 +12,16 @@ class MessageBoard extends React.Component {
   constructor(props) {
     super(props);
     this.state = { 
-      message: "",
       messages: [],
-      googleUser: null
+      googleUser: null,
+      websocket: null
     };
   }
 
+  postMessage(message) {
+    
+  }
+  
   getStream() {
     fetch("/api/getStream", { 
       method: 'POST',
@@ -25,11 +29,11 @@ class MessageBoard extends React.Component {
       body: JSON.stringify({ authToken:this.state.googleUser.getAuthResponse().id_token })
     })
     .then((response) => {
-      console.log(response);
+      // console.log(response);
       return response.json();
     })
     .then((data) => {
-      console.log(data);
+      // console.log(data);
       this.setState({messages: data});
     })
   }
@@ -50,6 +54,7 @@ class MessageBoard extends React.Component {
     .then((data) => {
       // window.location.href = data.newCallUrl;
       console.log(data);
+      this.setState({ message: "" });
     })
   }
   
@@ -57,20 +62,55 @@ class MessageBoard extends React.Component {
     this.setState({ message: evt.target.value });
   }
 
+  googleUserLoggedIn(googleUser) {
+    console.log("login success"); 
+    this.setState({googleUser:googleUser}); 
+    this.getStream();
+    
+    var websocket = new WebSocket("wss://grizzly-shimmer-ink.glitch.me/echo", [],
+      { 'headers': { 'x-Auth-Token': this.state.googleUser.getAuthResponse().id_token } });
+    console.log(this.state.websocket);
+    websocket.onopen = (event) => {
+      websocket.send(this.state.googleUser.getAuthResponse().id_token);    
+    };
+    websocket.onclose = (evt) => {
+      this.setState({websocket: null});
+    }
+    websocket.onmessage = (msg) => {
+      // console.log("websocket: " + msg.data);
+      var tmp = this.state.messages;
+      tmp.push(JSON.parse(msg.data));
+      this.setState({messages: tmp});
+    };
+    
+    this.setState({websocket: websocket});
+  }
+  
   render() {
     console.log("render mb");
     const googleLogin = (
       <GoogleLogin
             clientId="555702065730-cenf5paf61i7iapdrpqoabet8leejerr.apps.googleusercontent.com"
             buttonText="Login"
-            onSuccess={ (googleUser) => { console.log("login success"); this.setState({googleUser:googleUser}); this.getStream(); } }
+            onSuccess={ (googleUser) => { this.googleUserLoggedIn(googleUser); } }
             onFailure={ (googleFailure) => { console.log(googleFailure); } }
             cookiePolicy={'single_host_origin'}
             isSignedIn={ true }
       />
     );
+    const googleLogout = (
+      <GoogleLogout
+      clientId="555702065730-cenf5paf61i7iapdrpqoabet8leejerr.apps.googleusercontent.com"
+      buttonText="Logout"
+      onLogoutSuccess={(logout) => { console.log("logged out" + logout); this.setState({googleUser:null, messages:null});}}
+    >
+    </GoogleLogout>
+    );
+    
     return (
       <div>
+        <h1>Question Time</h1>
+        <h4>Quick Q&A</h4>
         { this.state.googleUser === null ? googleLogin : "" }
         <MessageList messages={this.state.messages} />
         <div>
@@ -102,7 +142,7 @@ class MessageList extends React.Component {
     return (
       <div>
         {this.props.messages.map((value, index) => {
-          return <Message key={index} message={value} />
+          return <Message key={value.id} message={value} />
       })}
       </div>
     );

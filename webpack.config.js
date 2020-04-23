@@ -2,6 +2,7 @@ const path = require('path');
 
 const webpack = require("webpack");
 module.exports = {
+  mode: 'development',
   // Which start file(s) to build the dependency graph from
   entry: {
     main: './src/messageboard.js'
