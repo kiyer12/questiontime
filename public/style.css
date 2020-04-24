@@ -9,32 +9,78 @@ body {
 }
 
 h1 {
-  color: #ccc;
+  color: #333;
   max-width: calc(100% - 5rem);
-  line-height: 1.1;
+/*   line-height: 1.1; */
+  font-size: 14pt;
 }
 
+.userImage {
+  height:32px;
+  width: 32px;
+}
+
+.postArea {
+  height: 45px;
+  margin-top: 20px;  
+}
+
+.postButton {
+  
+  background: #9f9;
+  border:0;  
+  margin-left: 10px;
+  width: 100px;  
+}
+
+.postButton:hover {
+  background: #cfc;
+}
+
+.messageField {
+  height: 100%;
+  width: 300px;
+  resize: none;
+  border: 1px lightgray solid;
+  border-radius: 10px;
+
+  padding: 10px;
+}
+
+.messageList {
+  height: 65vh;
+  width: 50vw;
+  max-width: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
 .message {
-  width: 500px;
+  width: 93%;
   margin-right: 5px;
   border-bottom: 1px solid lightgray;
   border-collapse: collapse;
   padding-left: 10px;
   margin-bottom: 10px;
   padding-top: 5px;
+  min-height: 50px;
 }
 
 .message .name {
   font-size: 12pt;
   font-weight: bold;
-  color: #333333;
+  color: #666;
   margin-right: 10px;
 }
 
 .message .date {
   font-size: 10pt;
   color: #aaaaaa;
+}
+
+.message .text {
+  margin-left: 10px;
+  color: #666;
 }
 
 .lds-default {

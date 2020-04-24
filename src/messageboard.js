@@ -12,6 +12,7 @@ class MessageBoard extends React.Component {
   constructor(props) {
     super(props);
     this.state = { 
+      message: "",
       messages: [],
       googleUser: null,
       websocket: null
@@ -62,22 +63,17 @@ class MessageBoard extends React.Component {
     this.setState({ message: evt.target.value });
   }
 
-  googleUserLoggedIn(googleUser) {
-    console.log("login success"); 
-    this.setState({googleUser:googleUser}); 
-    this.getStream();
-    
-    var websocket = new WebSocket("wss://grizzly-shimmer-ink.glitch.me/echo", [],
+  websocketInit(googleUser) {
+    var websocket = new WebSocket("wss://questiontime.glitch.me/echo", [],
       { 'headers': { 'x-Auth-Token': this.state.googleUser.getAuthResponse().id_token } });
-    console.log(this.state.websocket);
     websocket.onopen = (event) => {
       websocket.send(this.state.googleUser.getAuthResponse().id_token);    
     };
     websocket.onclose = (evt) => {
       this.setState({websocket: null});
+      this.websocketInit(googleUser);
     }
     websocket.onmessage = (msg) => {
-      // console.log("websocket: " + msg.data);
       var tmp = this.state.messages;
       tmp.push(JSON.parse(msg.data));
       this.setState({messages: tmp});
@@ -86,11 +82,19 @@ class MessageBoard extends React.Component {
     this.setState({websocket: websocket});
   }
   
+  googleUserLoggedIn(googleUser) {
+    console.log("login success"); 
+    this.setState({googleUser:googleUser}); 
+    this.getStream();
+    this.websocketInit(googleUser);
+    
+  }
+  
   render() {
     console.log("render mb");
     const googleLogin = (
       <GoogleLogin
-            clientId="555702065730-cenf5paf61i7iapdrpqoabet8leejerr.apps.googleusercontent.com"
+            clientId="555702065730-kv4r4cuhea60mlv8j1ngn4p9n8irec8o.apps.googleusercontent.com"
             buttonText="Login"
             onSuccess={ (googleUser) => { this.googleUserLoggedIn(googleUser); } }
             onFailure={ (googleFailure) => { console.log(googleFailure); } }
@@ -100,7 +104,7 @@ class MessageBoard extends React.Component {
     );
     const googleLogout = (
       <GoogleLogout
-      clientId="555702065730-cenf5paf61i7iapdrpqoabet8leejerr.apps.googleusercontent.com"
+      clientId="555702065730-kv4r4cuhea60mlv8j1ngn4p9n8irec8o.apps.googleusercontent.com"
       buttonText="Logout"
       onLogoutSuccess={(logout) => { console.log("logged out" + logout); this.setState({googleUser:null, messages:null});}}
     >
@@ -109,20 +113,18 @@ class MessageBoard extends React.Component {
     
     return (
       <div>
-        <h1>Question Time</h1>
-        <h4>Quick Q&A</h4>
+        <h1>Question Time - Fast Q&A</h1>
         { this.state.googleUser === null ? googleLogin : "" }
         <MessageList messages={this.state.messages} />
-        <div>
-           <input
+        <div className="postArea">
+           <textarea
+             className="messageField"
             type="text"
             name="code"
+            value={this.state.message}
             onChange={evt => this.updateEventCode(evt)}
-            >
-          </input>
-          <button onClick={() => {
-              this.postMessage(null);
-            }}>Post</button>
+            />
+          <button className="postButton" onClick={() => { this.postMessage(null);}}>Post</button>
           </div>
       </div>
     );
@@ -134,13 +136,12 @@ class MessageList extends React.Component {
     super(props);
     this.state = { 
     };
+    this.listRef = React.createRef();
   }
 
   render() {
-    console.log("render ml");
-    var listItems = "";                                          
     return (
-      <div>
+      <div ref={this.listRef} className="messageList">
         {this.props.messages.map((value, index) => {
           return <Message key={value.id} message={value} />
       })}
@@ -158,10 +159,12 @@ class Message extends React.Component {
 
   render() {
     return (
-      <div className="message">
-        <div><span className="name">{this.props.message.userPayload.name}</span><span className="date">{moment(this.props.message.dateTime).fromNow() + ", " +
-              moment(this.props.message.dateTime).format('MMMM Do YYYY, h:mm:ss a')}</span></div>
-        <div>{this.props.message.message}</div>
+      <div className="message" >
+        <div>
+          <span className="name">{this.props.message.userPayload.name}</span>
+          <span className="date">{moment(this.props.message.dateTime).fromNow()}</span>
+        </div>
+        <div><img className="userImage" src={this.props.message.userPayload.picture} /> <span className="text">{this.props.message.message}</span></div>
         <div></div>
       </div>
     );
