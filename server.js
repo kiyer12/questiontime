@@ -16,8 +16,9 @@ app.use(session(
   })
 );
 
-app.use(express.urlencoded()); // Parse URL-encoded bodies (as sent by HTML forms)
+app.use(express.urlencoded({extended: true})); // Parse URL-encoded bodies (as sent by HTML forms)
 app.use(express.json()); // Parse JSON bodies (as sent by API clients)
+
 
 var expressWs = require('express-ws')(app);
 var aWss = expressWs.getWss('/echo');
@@ -76,8 +77,9 @@ app.post("/api/getStream", (request, response) => {
       response.json(value);
     },
     (error) => {
-      response.json(["not authed"]);
-    });   
+      // response.json(["not authed"]);
+      response.sendStatus(401);
+    });
 });
 
 app.post("/api/postMessage", (request, response) => {
@@ -94,9 +96,9 @@ app.post("/api/postMessage", (request, response) => {
       };
 
     var eventMessages = db
-    .get('messages')
-    .push(message)
-    .write();
+      .get('messages')
+      .push(message)
+      .write();
     
     // console.log("written");
     response.json(["posted"]);
