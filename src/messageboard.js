@@ -110,7 +110,7 @@ class MessageBoard extends React.Component {
       </GoogleLogout>
     );
     const loggedIn = (
-      <div>
+      <React.Fragment>
         <MessageList messages={this.state.messages} />
         <div className="postArea">
           <img className="userPostImage" src={this.state.profileImage} /> 
@@ -124,7 +124,7 @@ class MessageBoard extends React.Component {
             />
             <button className="postButton" onClick={() => { this.postMessage();}}> </button>
         </div>
-      </div>
+      </React.Fragment>
     );
     
     const notConnected = (
@@ -132,7 +132,7 @@ class MessageBoard extends React.Component {
     );
     
     return (
-      <div>
+      <React.Fragment>
         <div className="title">
           <div className="titleText">Question Time - Fast Q&A</div>
           {this.state.websocket === null  && this.state.googleUser !== null ? notConnected : "" }
@@ -140,7 +140,7 @@ class MessageBoard extends React.Component {
           </div> 
         { this.state.googleUser === null ? googleLogin : loggedIn }
         { this.state.errorMessage === null ? "" : (<span>You are not authorized.</span>) }
-      </div>
+      </React.Fragment>
     );
   }
 }
