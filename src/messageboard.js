@@ -37,7 +37,6 @@ class MessageBoard extends React.Component {
       return [];
     })
     .then((data) => {
-      // console.log(data);
       this.setState({messages: data});
     })
   }
@@ -189,7 +188,6 @@ class MessageList extends React.Component {
   }
 
   componentDidUpdate() {
-    console.log("fixing scroll");
     this.listRef.current.scrollTop = this.listRef.current.scrollHeight;
   }
   
@@ -211,13 +209,15 @@ class Message extends React.Component {
     };
   }
 
-  postLike() {
+  toggleLike() {
+    const operation = this.thisUserHasFaved() ? "unfave" : "fave";    
     fetch("/api/postLike", { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         authToken:this.props.token.getAuthResponse().id_token,
-        messageId: this.props.message.id
+        messageId: this.props.message.id,
+        operation: operation
       })
     })
     .then((response) => {
@@ -250,7 +250,6 @@ class Message extends React.Component {
   
   thisUserHasFaved() {
     var foundIndex = this.props.message.faves.findIndex(x => x.email === this.props.token.profileObj.email);
-    console.log(foundIndex);
     return (foundIndex > -1);
   }
   
@@ -268,7 +267,7 @@ class Message extends React.Component {
         <div className="favesArea">
           <div className="favesText">{ this.renderFaveText() }</div>
           <div className="faveButtons">
-            <button className="faveButton" onClick={() => { this.postLike(); }}>{this.thisUserHasFaved() ? "⭐️" :  "☆"} </button>
+            <button className="faveButton" onClick={() => { this.toggleLike(); }}>{this.thisUserHasFaved() ? "⭐️" :  "☆"} </button>
           </div>
         </div>
       </div>
