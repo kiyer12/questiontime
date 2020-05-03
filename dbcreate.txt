@@ -1,0 +1,13 @@
+CREATE TABLE posts (
+	postId TEXT PRIMARY KEY,
+	dateTime TEXT NOT NULL,
+	author TEXT NOT NULL,
+	postType TEXT NOT NULL,
+	messageText TEXT NOT NULL
+);
+
+CREATE TABLE faves (
+	postId TEXT NOT NULL,
+	dateTime TEXT NOT NULL,
+	faveAuthor TEXT NOT NULL
+);
