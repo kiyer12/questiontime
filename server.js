@@ -62,16 +62,20 @@ app.get("/", (request, response) => {
 function dbGetMessage(id) {
   var post = sqlDB
     .prepare(
-      "SELECT postId as id, dateTime, author, messageText as message from posts WHERE postId=?"
+      "SELECT postId as id, dateTime, author, messageText as message, postType, choices from posts WHERE postId=?"
     )
     .get(id);
   var faves = sqlDB
     .prepare(
-      "SELECT postId as id, dateTime, faveAuthor from faves WHERE postId=? "
+      "SELECT postId as id, dateTime, faveAuthor, faveData from faves WHERE postId=? "
     )
     .all(id);
   post.author = JSON.parse(post.author);
-  faves = faves.map(x => JSON.parse(x.faveAuthor));
+  post.choices = JSON.parse(post.choices);
+  faves = faves.map(x => {
+    x.faveAuthor = JSON.parse(x.faveAuthor);
+    return x;
+  });
 
   post.faves = faves;
   return post;
@@ -85,24 +89,26 @@ app.post("/api/getStream", (request, response) => {
     payload => {
       var posts = sqlDB
         .prepare(
-          "SELECT postId as id, dateTime, author as author, messageText as message from posts ORDER BY date(dateTime)"
+          "SELECT postId as id, dateTime, author as author, messageText as message, postType, choices from posts ORDER BY date(dateTime)"
         )
         .all();
       var faves = sqlDB
         .prepare(
-          "SELECT postId as id, dateTime, faveAuthor from faves ORDER BY postId ASC"
+          "SELECT postId as id, dateTime, faveAuthor, faveData from faves ORDER BY postId ASC"
         )
         .all();
       faves.forEach(f => {
         f.faveAuthor = JSON.parse(f.faveAuthor);
       });
 
+      // this is bad perf (probably, in the future, profile needed, etc.)
       posts.forEach(p => {
         p.author = JSON.parse(p.author);
+        p.choices = JSON.parse(p.choices);
         p.faves = [];
         faves.forEach(f => {
           if (f.id === p.id) {
-            p.faves.push(f.faveAuthor);
+            p.faves.push(f);
           }
         });
       });
@@ -115,13 +121,13 @@ app.post("/api/getStream", (request, response) => {
   );
 });
 
-app.post("/api/postLike", (request, response) => {
+app.post("/api/postFave", (request, response) => {
   const authToken = request.body.authToken;
   isGoogleAuthed(
     authToken,
     process.env.ALLOWED_DOMAIN,
     payload => {
-      if (request.body.operation === "fave") {
+      if (request.body.operation === "basic_fave" || request.body.operation.startsWith("poll")) {
         var lightPayload = {
           sub: payload.sub,
           email: payload.email,
@@ -131,19 +137,20 @@ app.post("/api/postLike", (request, response) => {
 
         const stmt = sqlDB
           .prepare(
-            "INSERT INTO faves (postId, dateTime, faveAuthor, authorId) VALUES (?, ?, ?, ?)"
+            "INSERT INTO faves (postId, dateTime, faveAuthor, authorId, faveData) VALUES (?, ?, ?, ?, ?)"
           )
           .run(
             request.body.messageId,
             new Date().toISOString(),
             JSON.stringify(lightPayload),
-            payload.sub
+            payload.sub, 
+            request.body.operation
           );
 
         var post = dbGetMessage(request.body.messageId);
         broadcastToAllWebsocketClients(post);
         response.json(["liked"]);
-      } else {
+      } else if (request.body.operation === "basic_unfave") {
         const stmt = sqlDB
           .prepare("DELETE FROM faves WHERE postId=? AND authorId=?")
           .run(request.body.messageId, payload.sub);
@@ -201,32 +208,42 @@ app.post("/api/postPoll", (request, response) => {
     authToken,
     process.env.ALLOWED_DOMAIN,
     payload => {
-      // const choices = request.body.choices;
-      const prompt = request.body.prompt;
-      const choices = ["option1", "option2"];
-      var choiceDict = {};
-      choiceDict = choices.reduce((c, cur) => {
-        c[cur] = 0;
-      });
-      console.log("here");
       var message = {
         dateTime: new Date(),
-        userPayload: payload,
-        id: shortid.generate(),
-        messageType: "poll",
-        choices: choiceDict,
-        prompt: prompt
+        author: payload,
+        messageType: "text",
+        message: request.body.message,
+        choices: request.body.choices,
+        id: shortid.generate()
       };
-
-      // console.log("written");
+      
+      const stmt = sqlDB
+        .prepare(
+          "INSERT INTO posts (postId, dateTime, author, postType, messageText, choices) VALUES (?, ?, ?, ?, ?, ?)"
+        )
+        .run(
+          message.id,
+          message.dateTime.toISOString(),
+          JSON.stringify(payload),
+          "poll",
+          request.body.message, 
+          JSON.stringify(message.choices)
+        );
+      
       response.json(["posted"]);
-      broadcastToAllWebsocketClients(message);
+      // broadcastToAllWebsocketClients(message);
     },
     error => {
       response.json("not authed");
     }
   );
 });
+
+//assumed basic authentication has already taken place.
+function handleMessage(msg, user) {
+  
+}
+
 
 app.ws("/echo", function(ws, req) {
   ws.on("message", function(msg) {

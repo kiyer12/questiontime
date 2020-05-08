@@ -157,6 +157,13 @@ h1 {
   display: inline-block;
 }
 
+.favesText {
+  display: inline-block;
+  font-size: 10px;
+  color: #666;
+  margin-left: 5px;
+}
+
 .characterCounter {
   position: relative;
   top: -150%;
