@@ -8,6 +8,7 @@ body {
   line-height: 1.5em;
   background: #e9ebee;
   margin-top: 10px;
+  overflow: hidden;
 }
 
 h1 {
@@ -22,7 +23,7 @@ h1 {
   max-width: 600px;
   min-width: 500px; 
   margin:auto;
-  height: 85vh;
+  height: 90vh;
 }
 
 .title {
@@ -87,12 +88,35 @@ h1 {
   background-color: #fff0;  
 
   position: relative;
-  top: -110%;
+  top: -67px;
   left: 76%;
 }
 
 .postButton:hover {
   background-size: 40%;
+}
+
+.pollButton {
+  border: 0;
+  margin-left: 10px;
+  vertical-align: top;
+  height: 100%;
+  background-image: url(https://cdn.glitch.com/14048558-fbee-48a6-96cb-ee3d5b1e0a53%2Fclipart1828482.png?v=1589078532945);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 50%;
+  filter: none;
+  
+  width: 50px;
+  background-color: #fff0;  
+
+  position: relative;
+  top: -150px;
+  left: 73%;
+}
+
+.pollButton:hover {
+  background-size: 60%;
 }
 
 .messageField {

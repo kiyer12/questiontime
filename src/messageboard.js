@@ -227,7 +227,7 @@ class PostEditor extends React.Component {
           {this.state.message.length} / 280
         </div>
         <button
-          className="postButton"
+          className="pollButton"
           onClick={() => {
             this.postPoll();
           }}
