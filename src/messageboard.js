@@ -438,6 +438,7 @@ class PollRender extends React.Component {
                 optionNum={index}
                 option={value}
                 numVotes={ this.getVoteTotals(index) }
+                numAllVotes={ this.getVoteTotals("") }
                 voteFunc={this.props.voteFunc}
               />
             );
@@ -455,6 +456,11 @@ class PollOption extends React.Component {
   }
 
   render() {
+    var progressStyle = {
+      background:'red', width:'100px', height:'10px',
+      display:'inline-block', marginLeft: '5px'
+    };
+    
     return (
       <React.Fragment>
         <div>
@@ -463,12 +469,17 @@ class PollOption extends React.Component {
               this.props.voteFunc(this.props.optionNum);
             }}
           >
-            {this.props.option} -- {this.props.numVotes}
+            {this.props.option} -- {this.props.numVotes} out of {this.props.numAllVotes}
           </button>
+          <div style={ progressStyle }></div>
         </div>
       </React.Fragment>
     );
   }
+}
+
+class ProgressBar extends React.Component {
+  
 }
 
 const domContainer = document.querySelector("#MessageBoard");

@@ -17,7 +17,12 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <div id="MessageBoard"></div>
-    <script src="/main.js"></script>
+    <form action="/slackPoll" method="post">
+      <textarea style="width: 400px; height: 400px;" name="listText"></textarea>
+      <button>
+        Submit
+      </button>
+    </form>
+    </div>
   </body>
 </html>

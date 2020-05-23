@@ -59,6 +59,29 @@ app.get("/", (request, response) => {
   response.sendFile(__dirname + "/views/index.html");
 });
 
+app.get("/slackPoll", (request, response) => {
+  response.sendFile(__dirname + "/views/slackPoll.html");
+});
+
+app.post("/slackPoll", (request, response) => {
+  const list = request.body.listText;
+  console.log(list);
+  var lines = list.split("\n");
+  lines = lines.slice(0, 9);
+  lines = lines.map(x => x.trim());
+  
+  var pollCommand = "/poll \"Vote on Agenda Items For Leads Today\" ";
+  lines.forEach(x => {
+    if (x.length === 0) {
+      return;
+    }
+    pollCommand += "\"" + x + "\" ";
+  })
+  
+  response.send(pollCommand);
+});
+
+
 function dbGetMessage(id) {
   var post = sqlDB
     .prepare(

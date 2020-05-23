@@ -1,5 +1,9 @@
 # todo
 
+# poll feature  
+* make the poll options render prettily
+
+
 # UI / UX todo
 * Faves use stacked profile photos to show likes.
 
